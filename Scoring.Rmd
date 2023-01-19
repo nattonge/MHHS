@@ -29,7 +29,19 @@ mhhs_data<-read.csv("../../03-ProcessData/MHHS_01182023_cleanheader.csv")
 
 ```{r demographics}
 
-mhhs_demotbl<-mhhs_data %>% select(Race_Ethn2,BIC_1,LANG_1,EDUC_Par,EDUC_Self,GENDER,SEXOR,MILIT) %>% mutate(        Race_Ethn2=factor(Race_Ethn2,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered","White","Black","Hispanic","Asian","AmerIndian","PacificIslander","Multiracial")), BIC_1=factor(BIC_1, labels=c("Not answered","NotBicultural","Bicultural")), LANG_1=factor(LANG_1,labels=c("Not Answered","English at Home","Additional Language at Home")), EDUC_Par=factor(EDUC_Par,labels = c("Not answered","<High School","High School","Some college","Associates","Bachelors","Masters","Doctoral/Professional")),EDUC_Self=factor(EDUC_Self,labels = c("Not answered","<High School","High School","Some college","Associates","Bachelors","Masters","Doctoral/Professional")), GENDER=factor(GENDER,levels=c(NA,0,1,2,3,4,5,6,7),labels=c("Not answered","cis-woman","cis-man","trans woman","trans man","non-binary","self-id","prefer not to respond")), SexualOrientation=factor(SEXOR,labels = c("NA","Straight","Bisexual","Gay","Lesbian","Queer","Questioning","Self-ID","Prefer not to respond")), MilitaryService=factor(MILIT,levels=c(1,2,3,4,5,6,7,8),labels=c("Never Served","Active Duty","National Guard","Military Spouse","Military Dependent","Veteran","Other","Prefer not to respond"))) %>% select(-MILIT,-SEXOR)
+# Know the range of possible answers for each factor and make sure to include NA
+
+mhhs_demotbl<-mhhs_data %>% select(Race_Ethn2,BIC_1,LANG_1,EDUC_Par,EDUC_Self,GENDER,SEXOR,MILIT) %>% 
+mutate(
+Race_Ethn2=factor(Race_Ethn2,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","White","Black","Hispanic","Asian","AmerIndian","PacificIslander","Multiracial"),exclude=NULL), 
+BIC_1=factor(BIC_1, levels=c(NA,1,2,3),labels=c("Not answered","NotBicultural","Bicultural")), 
+LANG_1=factor(LANG_1, levels=c(NA,1,2,3),labels=c("Not Answered","English at Home","Additional Language at Home")), 
+EDUC_Par=factor(EDUC_Par,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<High School","High School","Some college","Associates","Bachelors","Masters","Doctoral/Professional"),exclude = NULL),
+EDUC_Self=factor(EDUC_Self,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<High School","High School","Some college","Associates","Bachelors","Masters","Doctoral/Professional"),exclude=NULL), 
+GENDER=factor(GENDER,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","cis-woman","cis-man","trans woman","trans man","non-binary","self-id","prefer not to respond"),exclude=NULL), 
+SexualOrientation=factor(SEXOR, levels=c(NA,1,2,3,4,5,6,7,8), labels = c("Not Answered","Straight","Bisexual","Gay","Lesbian","Queer","Questioning","Self-ID","Prefer not to respond"),exclude = NULL), 
+MilitaryService=factor(MILIT,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered","Never Served","Active Duty","National Guard","Military Spouse","Military Dependent","Veteran","Other","Prefer not to respond"),exclude=NULL)) %>% 
+select(-MILIT,-SEXOR)
 
 CreateTableOne(data=mhhs_tbl)
 ```
