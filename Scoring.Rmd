@@ -9,6 +9,7 @@ library(tidyverse)
 library(apaTables)
 library(tableone)
 library(dplyr)
+library(psych)
 
 ```
 
@@ -76,7 +77,8 @@ promis_global<-promis_global %>% mutate(across(PROMIS_Global1_1:PROMIS_Global2_2
   rowwise() %>%  mutate(PG_PhysHealth=sum(c(PROMIS_Global1_3,PROMIS_Global1_7,PROMIS_Global3_1,PROMIS_Global2_2)),PG_MentHealth=sum(c(PROMIS_Global1_2,PROMIS_Global1_4,PROMIS_Global1_5,PROMIS_Global2_1)))
 
 key_promis.list<-list(PH=c("PROMIS_Global1_3","PROMIS_Global1_7","PROMIS_Global3_1","PROMIS_Global2_2"),MH=c("PROMIS_Global1_2","PROMIS_Global1_4","PROMIS_Global1_5","PROMIS_Global2_1"))
-key_promis<-make.keys(nvars=10,key_promis.list,item.labels = colnames(promis_global))
+
+key_promis<-psych::make.keys(nvars=10,key_promis.list,item.labels = colnames(promis_global))
 scales_promis<-scoreItems(key_promis,promis_global)
 summary(scales_promis)
 
@@ -86,17 +88,24 @@ GHSQL has one open-response item. This is not included in the summary score. Sco
 ```{r GHSQL}
 ghsql<-mhhs_data %>% select(contains("GHSQL"))
 
-ghsql %>% rowwise() %>% mutate(General=sum(c(GHSQL_Pers_1:GHSQL_Pers_9),na.rm=TRUE))
-
 ghsql<-ghsql %>% mutate(General=rowSums((select(ghsql,GHSQL_Pers_1:GHSQL_Pers_9,GHSQL_SUI_1:GHSQL_SUI_9)))) %>% 
  rowwise() %>%  
   mutate(Personal=sum(c_across(GHSQL_Pers_1:GHSQL_Pers_8)),
          Suicide=sum(c_across(GHSQL_SUI_1:GHSQL_SUI_8)),
-         Informal_all=sum(c(GHSQL_Pers_1,GHSQL_SUI_1,GHSQL_Pers_2,GHSQL_SUI_2,GHSQL_Pers_3,GHSQL_SUI_3,GHSQL_Pers_4,GHSQL_SUI_4,GHSQL_Pers_1)),
+         Informal_all=sum(c(GHSQL_Pers_1,GHSQL_SUI_1,GHSQL_Pers_2,GHSQL_SUI_2,GHSQL_Pers_3,GHSQL_SUI_3,GHSQL_Pers_4,GHSQL_SUI_4)),
          Formal_all=sum(c(GHSQL_Pers_5,GHSQL_SUI_5,GHSQL_Pers_6,GHSQL_SUI_6,GHSQL_Pers_7,GHSQL_SUI_7,GHSQL_Pers_8,GHSQL_SUI_8)),
          None_all=sum(c(GHSQL_Pers_9,GHSQL_SUI_9))) %>% 
   ungroup() %>% #remove rowwise grouping 
   mutate(Personal_z=scale(Personal),Suicide_z=scale(Suicide),Informal_all_z=scale(Informal_all),Formal_all_z=scale(Formal_all),None_all_z=scale(None_all))
+
+#make a dataframe with only the items to be scored/that need reliability
+ghsql_scoring<-ghsql %>% dplyr::select(1:9,12:20)
+key_ghsql.list<-list(General=c(1:18),Personal=c(1:9),Suicide=c(10:18),Formal=c(5,14,6,15,7,16,8,17),Informal=c(1,10,2,11,3,12,4,13))
+key_ghsql<-make.keys(18,key_ghsql.list,colnames(ghsql_scoring))
+
+scales_ghsql<-scoreItems(key_ghsql.list,ghsql_scoring)
+summary(scales_ghsql)
+
 
 ```
 
