@@ -101,6 +101,8 @@ ghsql<-ghsql %>% mutate(General=rowSums((select(ghsql,GHSQL_Pers_1:GHSQL_Pers_9,
 ```
 
 ```{r DASS21}
+dass<-mhhs_data %>% select(contains("DASS"))
+
 
 ```
 
