@@ -9,7 +9,7 @@ library(tidyverse)
 library(apaTables)
 library(tableone)
 library(dplyr)
-library(psych)
+
 
 ```
 
