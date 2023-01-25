@@ -72,13 +72,15 @@ promis_global<-mhhs_data %>% select(contains("PROMIS"))
 
 # pain item: 5=0, 4=1:3, 3=4:6, 2=7:9, 1=10
 
-promis_global<-promis_global %>% mutate(across(c(PROMIS_Global1_1:PROMIS_Global1_7,PROMIS_Global2_1,PROMIS_Global2_2),~6-.)) %>% 
-  mutate(PROMIS_Global3_1=recode(PROMIS_Global3_1,`0`=5,`1`=4,`2`=4,`3`=4,`4`=3,`5`=3,`6`=3,`7`=2,`8`=2,`9`=2,`10`=1)) %>% 
-  rowwise() %>%  mutate(PG_PhysHealth=sum(c(PROMIS_Global1_3,PROMIS_Global1_7,PROMIS_Global3_1,PROMIS_Global2_2)),PG_MentHealth=sum(c(PROMIS_Global1_2,PROMIS_Global1_4,PROMIS_Global1_5,PROMIS_Global2_1))) %>% ungroup()
+# renaming the Promis to match the original measure
 
-promis_global_scoring<-promis_global %>% select(-PROMIS_Global1_1, -PROMIS_Global1_6,-PG_PhysHealth,-PG_MentHealth)
+promis_global<-promis_global %>% rename_with(~sprintf("PROMIS_Global0%d",1:5),.cols=c(PROMIS_Global1_1:PROMIS_Global1_5)) %>%  rename(PROMIS_Global09=PROMIS_Global1_6,PROMIS_Global06=PROMIS_Global1_7, PROMIS_Global10=PROMIS_Global2_1, PROMIS_Global08=PROMIS_Global2_2,PROMIS_Global07=PROMIS_Global3_1)%>% mutate(across(c(PROMIS_Global01:PROMIS_Global08),~6-.)) %>% 
+  mutate(PROMIS_Global07=recode(PROMIS_Global07,`0`=5,`1`=4,`2`=4,`3`=4,`4`=3,`5`=3,`6`=3,`7`=2,`8`=2,`9`=2,`10`=1))%>% 
+  rowwise() %>%  mutate(PG_PhysHealth=sum(c(PROMIS_Global03,PROMIS_Global06,PROMIS_Global07,PROMIS_Global08)),PG_MentHealth=sum(c(PROMIS_Global02,PROMIS_Global04,PROMIS_Global05,PROMIS_Global10))) %>% ungroup()
 
-key_promis.list<-list(PH=c("PROMIS_Global1_3","PROMIS_Global1_7","PROMIS_Global3_1","PROMIS_Global2_1"),MH=c("PROMIS_Global1_2","PROMIS_Global1_4","PROMIS_Global1_5","PROMIS_Global2_1"))
+promis_global_scoring<-promis_global %>% select(-PROMIS_Global01, -PROMIS_Global09,-PG_PhysHealth,-PG_MentHealth)
+
+key_promis.list<-list(PH=c("PROMIS_Global03","PROMIS_Global06","PROMIS_Global07","PROMIS_Global08"),MH=c("PROMIS_Global02","PROMIS_Global04","PROMIS_Global05","PROMIS_Global10"))
 
 key_promis<-make.keys(nvars=8,key_promis.list,item.labels = colnames(promis_global_scoring))
 scales_promis<-scoreItems(key_promis,promis_global_scoring)
