@@ -177,3 +177,9 @@ summary(scales_bfne)
 
 ```
 
+# ISMI
+* In the pilot data exclude #30 because this was just a blank item
+```{r ISMI}
+ISMI<-select(mhhs_data,contains("ISMI"))
+
+```
