@@ -125,7 +125,7 @@ The stress scale is sensitive to levels of chronic nonspecific arousal. It asses
 
 Scores for depression, anxiety and stress are calculated by summing the scores for the relevant items
 
-Scores on the DASS-21 will need to be multiplied by 2 to calculate the final score.
+Scores on the DASS-21 will need to be multiplied by 2 to calculate the final score and stay equivalent with DASS-42.
 ```{r DASS21}
 dass<-mhhs_data %>% select(contains("DASS"))
 
@@ -150,7 +150,34 @@ summary(scales_dass)
 
 ```
 
+29-item measure assessing self stigma of mental illness. Includes subscales: alienation, stereotype endorsement, discrimination experience, social withdrawal, stigma resistance. Scored from 1-4. The entire Stigma resistance subscale is reverse scored.
+
 ```{r ISMI 29}
+ismi<-mhhs_data %>% select(contains("ISMI"))
+
+ismi<-ismi %>% rowwise() %>%  
+  mutate(ISMI_Alientation=sum(ISMI29_1,ISMI29_5,ISMI29_8,ISMI29_16,ISMI29_17,ISMI29_21,na.rm = T),
+         ISMI_Stere=sum(ISMI29_2, ISMI29_6,ISMI29_10,ISMI29_18,ISMI29_19,ISMI29_23,ISMI29_29, na.rm=T),
+         ISMI_Discr=sum(ISMI29_3,ISMI29_15,ISMI29_22,ISMI29_25,ISMI29_28, na.rm=T),
+    ISMI_Withdrawal=sum(ISMI29_4,ISMI29_9,ISMI29_11,ISMI29_12,ISMI29_13,ISMI29_20)) %>% 
+      mutate(ISMI29_7=recode(ISMI29_7,`1`=4,`2`=3,`4`=1),
+             ISMI29_14=recode(ISMI29_14,`1`=4,`2`=3,`4`= 1),
+             ISMI29_24=recode(ISMI29_24,`1`=4,`2`=3,`4`= 1),
+             ISMI29_26=recode(ISMI29_26,`1`=4,`2`=3,`4`= 1),
+             ISMI29_27=recode(ISMI29_27,`1`=4,`2`=3,`4`= 1)) %>%  
+      mutate(ISMI_Stigmar=sum(ISMI29_7,ISMI29_14,ISMI29_24,ISMI29_26,ISMI29_27)) %>% 
+  ungroup()
+
+
+#make a dataframe with only the items to be scored/that need reliability
+dass_scoring<-dass %>% dplyr::select(DASS21_1:DASS21_21)
+key_dass.list<-list(Stress=c(1,6,8,11,12,14,18),Anxiety=c(2,4,7,9,15,19,20),Depression=c(3,5,10,13,16,17,21))
+
+key_dass<-make.keys(21,key_dass.list,colnames(dass_scoring))
+
+scales_dass<-scoreItems(key_dass.list,dass_scoring)
+summary(scales_dass)
+
 
 ```
 
