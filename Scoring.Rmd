@@ -89,7 +89,8 @@ summary(scales_promis)
 
 GHSQL has one open-response item. This is not included in the summary score. Scoring also seems somewhat flexible and includes informal/formal; personal-emotional/suicide; help from anyone/Help from no-one.
 
-Range 1-7
+Range 1-7 (Extremely unlikely to Extremely Likely)
+
 ```{r GHSQL}
 ghsql<-mhhs_data %>% select(contains("GHSQL"))
 
@@ -112,7 +113,11 @@ scales_ghsql<-scoreItems(key_ghsql.list,ghsql_scoring)
 summary(scales_ghsql)
 
 #histogram to explore the range 
-ghsql %>% select(GHSQL_Pers_1:GHSQL_Pers_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
+ghsql %>% select(GHSQL_Pers_1:GHSQL_Pers_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone helpline","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(GHSQL_SUI_1:GHSQL_SUI_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone helpline","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(Informal_all_z,Formal_all_z,None_all_z) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Informal (Pers + Sui)","Formal (Pers + Sui)","None (Pers + Sui)"))+ theme(axis.text.x = element_text(angle=90))
 
 ```
 
@@ -151,7 +156,24 @@ key_dass<-make.keys(21,key_dass.list,colnames(dass_scoring))
 scales_dass<-scoreItems(key_dass.list,dass_scoring)
 summary(scales_dass)
 
+#histogram to explore the range 
+dass %>% select(Dass21_Stress,Dass21_Anxiety, Dass21_Depression) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Stress","Anxiety","Depression"))+ theme(axis.text.x = element_text(angle=90))+geom_text(x=list(1,1),y=list(9,13),label=list("normal","Mild"))
 
+dass %>% mutate(Dep_cuts=case_when(Dass21_Depression<10~"Normal",
+                                   Dass21_Depression<14~"Mild",
+                                   Dass21_Depression<21~"Moderate",
+                                   Dass21_Depression<28~"Severe",
+                                   Dass21_Depression>27~"Extremely_Severe"),
+                Anx_cuts=case_when(Dass21_Anxiety<8~"Normal",
+                                   Dass21_Anxiety<10~"Mild",
+                                   Dass21_Anxiety<15~"Moderate",
+                                   Dass21_Anxiety<20~"Severe",
+                                   Dass21_Anxiety>19~"Extremely_Severe"),
+                Stress_cuts=case_when(Dass21_Stress<15~"Normal",
+                                   Dass21_Stress<19~"Mild",
+                                   Dass21_Stress<26~"Moderate",
+                                   Dass21_Stress<34~"Severe",
+                                   Dass21_Stress>33~"Extremely_Severe"))
 ```
 
 29-item measure assessing self stigma of mental illness. Includes subscales: alienation, stereotype endorsement, discrimination experience, social withdrawal, stigma resistance. Scored from 1-4. The entire Stigma resistance subscale is reverse scored.
