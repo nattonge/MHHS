@@ -196,10 +196,13 @@ pivot_longer(cols=starts_with("Dass21"),names_to = "Subscale",values_to = "score
 #severity histogram colored by severity
 dass_scatter %>% ggplot(aes(score,fill=Subscale,group=Subscale))+geom_bar()
 
+#jitter plot colored by severity
 dass_scatter %>% ggplot(aes(x=Subscale,y=score,colour=Cuts))+geom_jitter()+theme_classic()+scale_color_brewer(palette = "Set1")
 ```
 
 29-item measure assessing self stigma of mental illness. Includes subscales: alienation, stereotype endorsement, discrimination experience, social withdrawal, stigma resistance. Scored from 1-4. The entire Stigma resistance subscale is reverse scored.
+
+Traditional scoring is dichotomous and uses means. 
 
 ```{r ISMI 29}
 ismi<-mhhs_data %>% select(contains("ISMI"))
@@ -229,6 +232,9 @@ summary(scales_ismi)
 
 ismi$ISMI29_14
 cor(ismi$ISMI_Stigmar,ismi$ISMI_Alientation,use="complete.obs")
+
+ismi %>% select(ISMI_Alientation,ISMI_Stere,ISMI_Discr,ISMI_Withdrawal) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+
 ```
 For some reason, the rescored stigma resistance is a negative correlation
 ```{r DDI}
