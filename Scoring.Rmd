@@ -87,7 +87,9 @@ summary(scales_promis)
 
 ```
 
-GHSQL has one open-response item. This is not included in the summary score. Scoring also seems somewhat flexible and includes informal/formal; personal-emotional/suicide; help from anyone/Help from no-one
+GHSQL has one open-response item. This is not included in the summary score. Scoring also seems somewhat flexible and includes informal/formal; personal-emotional/suicide; help from anyone/Help from no-one.
+
+Range 1-7
 ```{r GHSQL}
 ghsql<-mhhs_data %>% select(contains("GHSQL"))
 
@@ -109,6 +111,8 @@ key_ghsql<-make.keys(18,key_ghsql.list,colnames(ghsql_scoring))
 scales_ghsql<-scoreItems(key_ghsql.list,ghsql_scoring)
 summary(scales_ghsql)
 
+#histogram to explore the range 
+ghsql %>% select(GHSQL_Pers_1:GHSQL_Pers_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
 
 ```
 
@@ -156,31 +160,32 @@ summary(scales_dass)
 ismi<-mhhs_data %>% select(contains("ISMI"))
 
 ismi<-ismi %>% rowwise() %>%  
-  mutate(ISMI_Alientation=sum(ISMI29_1,ISMI29_5,ISMI29_8,ISMI29_16,ISMI29_17,ISMI29_21,na.rm = T),
-         ISMI_Stere=sum(ISMI29_2, ISMI29_6,ISMI29_10,ISMI29_18,ISMI29_19,ISMI29_23,ISMI29_29, na.rm=T),
-         ISMI_Discr=sum(ISMI29_3,ISMI29_15,ISMI29_22,ISMI29_25,ISMI29_28, na.rm=T),
+  mutate(ISMI_Alientation=sum(ISMI29_1,ISMI29_5,ISMI29_8,ISMI29_16,ISMI29_17,ISMI29_21),
+         ISMI_Stere=sum(ISMI29_2, ISMI29_6,ISMI29_10,ISMI29_18,ISMI29_19,ISMI29_23,ISMI29_29),
+         ISMI_Discr=sum(ISMI29_3,ISMI29_15,ISMI29_22,ISMI29_25,ISMI29_28),
     ISMI_Withdrawal=sum(ISMI29_4,ISMI29_9,ISMI29_11,ISMI29_12,ISMI29_13,ISMI29_20)) %>% 
-      mutate(ISMI29_7=recode(ISMI29_7,`1`=4,`2`=3,`4`=1),
-             ISMI29_14=recode(ISMI29_14,`1`=4,`2`=3,`4`= 1),
-             ISMI29_24=recode(ISMI29_24,`1`=4,`2`=3,`4`= 1),
-             ISMI29_26=recode(ISMI29_26,`1`=4,`2`=3,`4`= 1),
-             ISMI29_27=recode(ISMI29_27,`1`=4,`2`=3,`4`= 1)) %>%  
+      mutate(ISMI29_7=recode(ISMI29_7,`1`=4,`2`=3,`3`=2,`4`=1),
+            ISMI29_14=recode(ISMI29_14,`1`=4,`2`=3,`3`=2,`4`=1),
+         ISMI29_24=recode(ISMI29_24,`1`=4,`2`=3,`3`=2,`4`=1),
+          ISMI29_26=recode(ISMI29_26,`1`=4,`2`=3,`3`=2,`4`=1),
+         ISMI29_27=recode(ISMI29_27,`1`=4,`2`=3,`3`=2,`4`=1)) %>%  
       mutate(ISMI_Stigmar=sum(ISMI29_7,ISMI29_14,ISMI29_24,ISMI29_26,ISMI29_27)) %>% 
   ungroup()
 
 
 #make a dataframe with only the items to be scored/that need reliability
-dass_scoring<-dass %>% dplyr::select(DASS21_1:DASS21_21)
-key_dass.list<-list(Stress=c(1,6,8,11,12,14,18),Anxiety=c(2,4,7,9,15,19,20),Depression=c(3,5,10,13,16,17,21))
+ismi_scoring<-ismi %>% dplyr::select(ISMI29_1:ISMI29_29)
+key_ismi.list<-list(Alien=c(1,5,8,16,17,21),Stereotype=c(2,6,10,18,19,23,29),Discrimination=c(3,15,22,25,28),Withdrawal=c(4,9,11,12,13,20),StigmaR=c(7,14,24,26,27))
 
-key_dass<-make.keys(21,key_dass.list,colnames(dass_scoring))
+key_ismi<-make.keys(29,key_ismi.list,colnames(ismi_scoring))
 
-scales_dass<-scoreItems(key_dass.list,dass_scoring)
-summary(scales_dass)
+scales_ismi<-scoreItems(key_ismi.list,ismi_scoring)
+summary(scales_ismi)
 
-
+ismi$ISMI29_14
+cor(ismi$ISMI_Stigmar,ismi$ISMI_Alientation,use="complete.obs")
 ```
-
+For some reason, the rescored stigma resistance is a negative correlation
 ```{r DDI}
 
 ```
