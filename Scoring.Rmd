@@ -233,11 +233,34 @@ summary(scales_ismi)
 ismi$ISMI29_14
 cor(ismi$ISMI_Stigmar,ismi$ISMI_Alientation,use="complete.obs")
 
-ismi %>% select(ISMI_Alientation,ISMI_Stere,ISMI_Discr,ISMI_Withdrawal) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+ismi %>% select(ISMI_Alientation,ISMI_Stere,ISMI_Discr,ISMI_Withdrawal,ISMI_Stigmar) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
 
 ```
 For some reason, the rescored stigma resistance is a negative correlation
+
+# Distress Disclosure Index
+
+Reverse score items 2, 4, 5, 8, 9, 10. Then sum the 12 items. Higher scores indicate a higher tendency to disclose distress, lower scores indicate greater concealment of distress.
 ```{r DDI}
+
+ddi<-mhhs_data %>% select(contains("DDI"))
+
+ddi<-ddi %>% mutate(across(c(DDI_2,DDI_4,DDI_5,DDI_8,DDI_9,DDI_10),~6-.)) %>%
+  rowwise() %>% mutate(DDI_Total=sum(c_across(DDI_1:DDI_12))) %>% 
+  ungroup()
+
+ddi_scoring<-ddi %>% dplyr::select(DDI_1:DDI_12)
+
+key_ddi.list<-list(Total=c(1:12))
+key_ddi<-make.keys(12,key_ddi.list,colnames(ddi_scoring))
+
+scales_ddi<-scoreItems(key_ddi.list,ddi_scoring)
+summary(scales_ddi)
+
+cor.test(ddi$DDI_Total,ghsql$General)
+cor.test(ddi$DDI_Total,ghsql$Personal)
+cor.test(ddi$DDI_Total,ghsql$Suicide)
+cor.test(ddi$DDI_Total,ghsql$None_all)
 
 ```
 
