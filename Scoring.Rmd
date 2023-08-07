@@ -257,6 +257,8 @@ key_ddi<-make.keys(12,key_ddi.list,colnames(ddi_scoring))
 scales_ddi<-scoreItems(key_ddi.list,ddi_scoring)
 summary(scales_ddi)
 
+
+# checking the correlations ot ensure they make sense
 cor.test(ddi$DDI_Total,ghsql$General)
 cor.test(ddi$DDI_Total,ghsql$Personal)
 cor.test(ddi$DDI_Total,ghsql$Suicide)
@@ -274,7 +276,7 @@ bfne<-mhhs_data %>% select(contains("bfne"))
 
 bfne<-bfne %>% mutate(across(c(BFNE_2,BFNE_4,BFNE_7,BFNE_10),~6-.))
                       
-bfne_scoring<-bfne %>% dplyr::select(bfne1:bfne12)
+bfne_scoring<-bfne %>% dplyr::select(BFNE_1:BFNE_12)
 key_bfne.list<-list(Total=c(1:12))
 key_bfne<-make.keys(12,key_bfne.list,colnames(bfne_scoring))
 
@@ -283,11 +285,39 @@ summary(scales_bfne)
 
 ```
 
+# Trust respoect scale
+8 questions 1-strongly disagree; 7 - strongly agree
+2,3,5,6 reverse-scored
+
 ```{r TRS}
+trs<-mhhs_data %>% select(contains("trs"))
+
+trs<-trs %>% mutate(across(c(TRS_2,TRS_3,TRS_5,TRS_6),~8-.))
+
+trs_scoring<-trs %>% dplyr::select(TRS_1:TRS_8)
+key_trs.list<-list(Total=c(1:8))
+key_trs<-make.keys(8,key_trs.list,colnames(trs_scoring))
+
+scales_trs<-scoreItems(key_trs.list,trs_scoring)
+summary(scales_trs)
+
+trs %>% select(TRS_1:TRS_8) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+
 
 ```
 
+# Trust in Physician Scale
+
+1 (strongly disagree)- 5 (strongly agree)
+11 items, unweighted mean of response
+reverse scored - 1, 5, 7, 11
+original scale alpha = .90
+
+Summary score of medical skepticism was obtained by taking the unweighted mean of the four items. 
 ```{r TPS}
+
+
+
 
 ```
 
@@ -299,9 +329,3 @@ summary(scales_bfne)
 
 ```
 
-# ISMI
-* In the pilot data exclude #30 because this was just a blank item
-```{r ISMI}
-ISMI<-select(mhhs_data,contains("ISMI"))
-
-```
