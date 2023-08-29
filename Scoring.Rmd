@@ -87,6 +87,7 @@ summary(scales_promis)
 
 ```
 
+# GHSQL
 GHSQL has one open-response item. This is not included in the summary score. Scoring also seems somewhat flexible and includes informal/formal; personal-emotional/suicide; help from anyone/Help from no-one.
 
 Range 1-7 (Extremely unlikely to Extremely Likely)
@@ -118,6 +119,8 @@ ghsql %>% select(GHSQL_Pers_1:GHSQL_Pers_9) %>% gather() %>% ggplot(aes(y=value,
 ghsql %>% select(GHSQL_SUI_1:GHSQL_SUI_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone helpline","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
 
 ghsql %>% select(Informal_all_z,Formal_all_z,None_all_z) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Informal (Pers + Sui)","Formal (Pers + Sui)","None (Pers + Sui)"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(GHSQL_Pers_10_TEXT,GHSQL_SUI_10_TEXT) %>% filter(GHSQL_Pers_10_TEXT!=""|GHSQL_SUI_10_TEXT!="")
 
 ```
 
@@ -199,7 +202,7 @@ dass_scatter %>% ggplot(aes(score,fill=Subscale,group=Subscale))+geom_bar()
 #jitter plot colored by severity
 dass_scatter %>% ggplot(aes(x=Subscale,y=score,colour=Cuts))+geom_jitter()+theme_classic()+scale_color_brewer(palette = "Set1")
 ```
-
+# ISMI29
 29-item measure assessing self stigma of mental illness. Includes subscales: alienation, stereotype endorsement, discrimination experience, social withdrawal, stigma resistance. Scored from 1-4. The entire Stigma resistance subscale is reverse scored.
 
 Traditional scoring is dichotomous and uses means. 
@@ -257,6 +260,10 @@ key_ddi<-make.keys(12,key_ddi.list,colnames(ddi_scoring))
 scales_ddi<-scoreItems(key_ddi.list,ddi_scoring)
 summary(scales_ddi)
 
+ddi %>% select(DDI_Total) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+ddi %>% select(DDI_Total) %>% add_column(ghsql %>% select(Personal,Suicide,General,None_all)) %>% cor.plot(.)
+
+
 
 # checking the correlations ot ensure they make sense
 cor.test(ddi$DDI_Total,ghsql$General)
@@ -285,7 +292,7 @@ summary(scales_bfne)
 
 ```
 
-# Trust respoect scale
+# Trust respect scale
 8 questions 1-strongly disagree; 7 - strongly agree
 2,3,5,6 reverse-scored
 
@@ -316,15 +323,61 @@ original scale alpha = .90
 Summary score of medical skepticism was obtained by taking the unweighted mean of the four items. 
 ```{r TPS}
 
+tps<-mhhs_data %>% select(contains("tps"))
+
+tps<-tps %>% mutate(across(c(TPS_1,TPS_5,TPS_7,TPS_11),~6-.)) %>% 
+  rowwise() %>% mutate(TPS_Tot=sum(c_across(TPS_1:TPS_11))) %>% 
+  ungroup()
+
+#selecting the write-ins
+tps %>% filter(TPS_O!="") %>% select(TPS_O)
+
+tps_scoring<-tps %>% dplyr::select(TPS_1:TPS_11)
+key_tps.list<-list(Total=c(1:11))
+key_tps<-make.keys(11,key_tps.list,colnames(tps_scoring))
+
+scales_tps<-scoreItems(key_tps.list,tps_scoring)
+summary(scales_tps)
+
+tps %>% select(TPS_1:TPS_11) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
 
 
 
 ```
+# Ethnic Identity Scale
+
+reverse score 4,5,8
 
 ```{r EIS}
+eis<-mhhs_data %>% select(contains("eis"))
+
+# identity questions
+eis_id<-eis %>% select(EIS_RE1:EIS_HORIGIN_3_TEXT)
+eis_resp<-eis %>% select(!EIS_RE1:EIS_HORIGIN_3_TEXT)
+
+# observe the write-ins
+eis_id %>% filter(EIS_RE1_7_TEXT!="") %>% select(EIS_RE1_7_TEXT)
+eis_id %>% filter(EIS_HORIGIN_3_TEXT!="") %>% select(EIS_HORIGIN_3_TEXT)
+
+# selecting responses only
+eis_resp<-eis_resp %>% mutate(across(c(EIS_Ethni_4,EIS_Ethni_5,EIS_Ethni_8),~5-.)) %>% 
+  rowwise() %>% mutate(EIS_Tot=sum(c_across(EIS_Ethni_1:EIS_Ethni_9))) %>% 
+  ungroup()
+
+eis_scoring<-eis_resp %>% dplyr::select(EIS_Ethni_1:EIS_Ethni_9)
+key_eis.list<-list(Total=c(1:9))
+key_eis<-make.keys(9,key_eis.list,colnames(eis_scoring))
+
+scales_eis<-scoreItems(key_eis.list,eis_scoring)
+summary(scales_eis)
+
+eis_resp %>% select(EIS_Ethni_1:EIS_Ethni_9) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+
+
 
 ```
 
+# Everyday Iniquity - Content
 ```{r EvIN}
 
 ```
