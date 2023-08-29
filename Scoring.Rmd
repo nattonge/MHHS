@@ -382,3 +382,32 @@ eis_resp %>% select(EIS_Ethni_1:EIS_Ethni_9) %>% gather() %>%  ggplot(aes(y=valu
 
 ```
 
+```{r}
+bicf<-mhhs_data %>% select(contains("bicf"))
+
+```
+
+```{r}
+bicii<-mhhs_data %>% select(contains("bicii"))
+
+```
+
+# Tosca-3
+
+```{r}
+
+```
+
+# Relationship assessment scale
+
+```{r}
+
+```
+
+# Self-concealment
+
+```{r}
+
+```
+
+# MINI-IPIP
