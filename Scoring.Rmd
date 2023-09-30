@@ -9,6 +9,7 @@ library(tidyverse)
 library(apaTables)
 library(tableone)
 library(dplyr)
+library(qualtRics)
 
 ```
 
@@ -21,6 +22,17 @@ library(dplyr)
 # write a new version that can be reimported with the proper column classes
 #write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
 ```
+
+```{r alt clean qualtrics}
+# a second way to clean quatrics using the qualtrics package
+library(qualtRics)
+library(kutils)
+qualdata<-importQualtrics("../01-RawData/MHHS_01182023.csv",importidrow=3,namerow=1,questionrow=2)
+
+# write the new version for later
+#write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
+```
+
 
 ```{r load data}
 
