@@ -9,30 +9,17 @@ library(tidyverse)
 library(apaTables)
 library(tableone)
 library(dplyr)
-library(qualtRics)
 
 ```
 
-```{r clean qualtrics headings ver 1}
-# this code seems to work at least some of the time
+```{r clean qualtrics headings}
+#columnNames<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE)[1,]
 
-# columnNames<-read.csv("../01-RawData/MHHS_01182023.csv",header=FALSE)[1,]
-# qual_data<-read.csv("../01-RawData/MHHS_01182023.csv",header=FALSE,col.names = columnNames)[-c(1:3),]
+#qual_data<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE,col.names = columnNames)[-c(1:3),]
 
 # write a new version that can be reimported with the proper column classes
 #write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
 ```
-
-```{r alt clean qualtrics}
-# a second way to clean quatrics using the qualtrics package
-library(qualtRics)
-library(kutils)
-qualdata<-importQualtrics("../01-RawData/MHHS_01182023.csv",importidrow=3,namerow=1,questionrow=2)
-
-# write the new version for later
-#write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
-```
-
 
 ```{r load data}
 
