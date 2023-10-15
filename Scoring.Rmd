@@ -24,14 +24,14 @@ library(kutils)
 #write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
 ```
 
-```{r al qualtrics cleaning}
+```{r alternate qualtrics cleaning}
 qualdata<-importQualtrics("../01-RawData/MHHS_01182023.csv",importidrow=3,namerow=1,questionrow=2)
 ```
 
 
 ```{r load data}
 
-mhhs_data<-read.csv("../../03-ProcessData/MHHS_01182023_cleanheader.csv")
+mhhs_data<-read.csv("../04-ProcessedData/MHHS_01182023_cleanheader.csv")
 
 ```
 
