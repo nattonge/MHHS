@@ -9,13 +9,11 @@ library(tidyverse)
 library(apaTables)
 library(tableone)
 library(dplyr)
-library(qualtRics)
-library(kutils)
-
 
 ```
 
 ```{r clean qualtrics headings}
+
 #columnNames<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE)[1,]
 
 #qual_data<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE,col.names = columnNames)[-c(1:3),]
@@ -24,14 +22,9 @@ library(kutils)
 #write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
 ```
 
-```{r alternate qualtrics cleaning}
-qualdata<-importQualtrics("../01-RawData/MHHS_01182023.csv",importidrow=3,namerow=1,questionrow=2)
-```
-
-
 ```{r load data}
 
-mhhs_data<-read.csv("../04-ProcessedData/MHHS_01182023_cleanheader.csv")
+mhhs_data<-read.csv("../../03-ProcessData/MHHS_01182023_cleanheader.csv")
 
 ```
 
