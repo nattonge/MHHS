@@ -10,6 +10,7 @@ library(apaTables)
 library(tableone)
 library(dplyr)
 
+# this version of the file for practicing
 ```
 
 ```{r clean qualtrics headings}
@@ -412,3 +413,20 @@ bicii<-mhhs_data %>% select(contains("bicii"))
 ```
 
 # MINI-IPIP
+
+#Kayleigh's attempt at scoring BICULTURAL IDENTITY INTEGRATION MAYBE? 
+10 items 1=sd 5 =sa
+reverse score 7, 8, 11, 12, 13, 14 only for total subscale mean
+Harmony: 1, 2*, 3, 6 Higher scores mean higher harmony (affective)
+Conflict: 7, 8*, 11, 12, 13, 14
+Items 2 and 8 are only asked for participants who self-identified as bicultural.
+
+BICII<-mhhs_data %>% select(contains("BICII"))
+
+BICII<-BICII %>% mutate(across(c(BICII_5,BICII_6,BICII_7,BICII_8,BICII_9,BICII_10),~10-.))
+BICII_scoring<-BICII %>% dplyr::select(BICII_1:BICII_10)
+key_BICII.list<-list(Total=c(1:10))
+key_BICII<-make.keys(10,key_BICII.list,colnames(BICII_scoring))
+
+scales_BICII<-scoreItems(key_BICII.list,BICII_scoring)
+summary(scales_BICII)
