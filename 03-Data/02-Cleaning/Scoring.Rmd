@@ -13,18 +13,19 @@ library(dplyr)
 ```
 
 ```{r clean qualtrics headings}
+# Note that there's a package that does this smoothly. Need to add it as an alternative at some point
 
-#columnNames<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE)[1,]
+#columnNames<-read.csv("../01-RawData/MHHS-1_12202023.csv",header=FALSE)[1,]
 
-#qual_data<-read.csv("../../01-RawData/MHHS_01182023.csv",header=FALSE,col.names = columnNames)[-c(1:3),]
+#qual_data<-read.csv("../01-RawData/MHHS-1_12202023.csv",header=FALSE,col.names = columnNames)[-c(1:3),]
 
 # write a new version that can be reimported with the proper column classes
-#write.csv(qual_data,"../../03-ProcessData/MHHS_01182023_cleanheader.csv",row.names=FALSE)
+#write.csv(qual_data,"../04-ProcessedData/MHHS-1_12202023_cleanheader.csv",row.names=FALSE)
 ```
 
 ```{r load data}
 
-mhhs_data<-read.csv("../../03-ProcessData/MHHS_01182023_cleanheader.csv")
+#mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 ```
 
