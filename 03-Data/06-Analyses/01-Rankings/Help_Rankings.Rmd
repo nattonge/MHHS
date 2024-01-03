@@ -14,24 +14,21 @@ library(readxl)
 
 ```{r load data}
 
-mhhs_data<-read.csv("../../03-Data/04-ProcessedData/MHHS_01182023_cleanheader.csv")
+mhhs_data<-read.csv("../../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 str(mhhs_data)
 ```
 
 ```{r transform matrix}
-g10<-mhhs_data %>% select(GHSQ_RankPers_1:GHSQ_RankPers_9)
-g10<-g10[complete.cases(g10),]
+personal<-mhhs_data %>% select(GHSQ_RankPers_1:GHSQ_RankPers_9)
+personal<-personal[complete.cases(personal),]
 
-rankg10<-rankagg(g10)
-destat(rankg10)
+rank_personal<-rankagg(personal)
+destat(rank_personal)
 
-
-rankagg(ghsql[complete.cases(ghsql),1:10])
-#Experience: 1=0-5, 2-6-10, 3=11-15, 4-16-20, 5=21+
-#Degree: 1=BA/BS, 2=MA/MS, 3=Specialist, 4=PhD
 ```
-# The Finch Examples workup
+
+# The Finch Examples
 Before applying to our massive dataset, some notes on the method and interpretation of the results based on Finch's faculty survey data.
 ```{r Finch example}
 Finch_supp_data <- read_excel("Finch_supp_data.xlsx")
