@@ -59,7 +59,7 @@ destat(faculty.rankings.agg)
 ```
 From this example using the faculty ranking data, item 2 is most favored followed by item 3 then item 1 (ranked 3rd). 
 
-
+## MDPref
 ```{r finch mdpref}
 mdpref(faculty.rankings.agg,rank.vector = T)
 
