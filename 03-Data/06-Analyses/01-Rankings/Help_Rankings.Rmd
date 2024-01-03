@@ -105,8 +105,61 @@ faculty.n<-nrow(faculty.survey)
 faculty.g<-group(faculty.rankings2, index = rep(seq_len(faculty.n), 1)) 
 faculty.tree <- pltree(faculty.g ~ ., data = faculty.survey[c("grad","experience")], minsize = 0.05*41, maxdepth = 3) 
 plot(faculty.tree)
+```
+
+```{r plct mhhs}
+personal<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9)
+personal_demo<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+personal<-personal[complete.cases(personal),]
+personal_demo<-left_join(personal,personal_demo)
+personal <- personal %>% select(-ResponseId)
+personal.rank<-as.rankings(personal) 
+
+personal.g<-group(personal.rank,index=rep(seq_len(nrow(personal)),1))
+
+tree_gendersex<-pltree(personal.g~.,data=personal_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(personal.g~.,data=personal_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+## Sui
+suic<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9)
+suic_demo<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+suic<-suic[complete.cases(suic),]
+suic_demo<-left_join(suic,suic_demo)
+suic <- suic %>% select(-ResponseId)
+suic.rank<-as.rankings(suic) 
+
+suic.g<-group(suic.rank,index=rep(seq_len(nrow(suic)),1))
+
+tree_gendersex<-pltree(suic.g~.,data=suic_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+tree_multimar<-pltree(suic.g~BIC_1*SEXOR,data=suic_demo, maxdepth=3,minsize=0.05*nrow(suic))
+plot(tree_raceethn)
+
+#creating a multiply marginalized field
+suic_demo<-suic_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+personal_demo<-personal_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+
+tree_multimar<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","SEXOR","multimar")])
+plot(tree_multimar)
+
+
+# PLM models
+pers.mod_mle <- PlackettLuce(personal.rank, npseudo=0) #for personal, everything worse than intimate partners
+suic.mod_mle <- PlackettLuce(suic.rank, npseudo=0 ) #for suic, mental health prof were marginally lower
+
+
+summary(pers.mod_mle,ref="GHSQ_RankPers_5") #for personal problem, friends, rps, and parents all preferred
+summary(suic.mod_mle,ref="GHSQO_RankSUI_5") 
 
 ```
+
 #TEST FOR RANDOM MEAN
 $Q = \frac{12n}{t(t+1)} \Sigma{^t_{j=1}} (m_i - \frac{t+1}{2})^2 $
 
