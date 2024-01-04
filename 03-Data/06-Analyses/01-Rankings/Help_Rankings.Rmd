@@ -8,23 +8,10 @@ library(qualtRics)
 library(kutils)
 library(pmr)
 library(readxl)
-
-
-```
-
-```{r load data}
-
-mhhs_data<-read.csv("../../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
-
-str(mhhs_data)
-```
-
-```{r transform matrix}
-personal<-mhhs_data %>% select(GHSQ_RankPers_1:GHSQ_RankPers_9)
-personal<-personal[complete.cases(personal),]
-
-rank_personal<-rankagg(personal)
-destat(rank_personal)
+library(smacof)
+library(PlackettLuce)
+library(prefmod)
+library(qvcalc)
 
 ```
 
@@ -56,9 +43,160 @@ destat(faculty.rankings.agg)
 ```
 From this example using the faculty ranking data, item 2 is most favored followed by item 3 then item 1 (ranked 3rd). 
 
-## MDPref
+#SMACOFF
+
+In the joint configuration plot, there are two dimensions. Much like a factor analysis, the algorithm reduces the data (in this case, to two dimensions) and it is the job of the analyst to describe those dimentions based on what they seem to be doing.
+The Shepard Diagram..
+
+```{r smacof}
+faculty.smacof <-smacofRect(faculty.survey[,1:6], itmax=1000) 
+plot(faculty.smacof, joint=TRUE, plot.type="confplot", what="both")
+plot(faculty.smacof, plot.type = "Shepard")
+```
+## Placket-Luce Model
+
+## Multi-Dimensional Pref
+Returns two dataframes. Item summarizes the distance of each item on the two dimensions. Ranking summarizs the dat for each rater and 
+Displays a 2D plot of the position of both judges and items, regardless of if 3-dim is specified. The items are labeled with consecutive numbers 1, 2, ..., k while the judges are presented as vectors pointing from the origin to their most preferred items.
+
+Notice how nothing points to 4 and 6
 ```{r finch mdpref}
 mdpref(faculty.rankings.agg,rank.vector = T)
+mdpref(faculty.rankings.agg,rank.vector = T,ndim=2)
+
+```
+#PlackettLuce analysis# 
+PLM conducted first.
+coef faculty.mod_mle is using the first item as the reference group. The coefficients reflect the order observed in descriptives but are now assignment a "worth" value. 
+Salary and health care are significant and positive relative to contract (higher ranked and more valued). Travel budget was significantly less valued; the others were not significantly different.
+
+With mean worth as the reference, salary, healthcare, were all significantly higher than average but workload and travel budget were significantly lower. 
+```{r}
+faculty.rankings2<-as.rankings(faculty.rankings) 
+faculty.mod_mle <- PlackettLuce(faculty.rankings2, npseudo=0) 
+coef(faculty.mod_mle)
+coef(faculty.mod_mle, log=FALSE) #this will give the worth parameters summed to 1
+summary(faculty.mod_mle) #CATEOGRY 1 WORTH IS THE REFERENCE
+summary(faculty.mod_mle, ref="health_care") #MEAN WORTH IS THE REFERENCE with NULL
+
+faculty.mod_mle.itempars<-itempar(faculty.mod_mle, vcov=TRUE) #corresponds to probabilities
+
+#ITEM PROBABILITIES FOR TOP RANK# 
+faculty.itempars<-itempar(faculty.mod_mle, ref= 1, log = TRUE, vcov=TRUE) 
+
+attributes(faculty.itempars)
+itempar(faculty.mod_mle, ref=1:6) 
+faculty.itempars.probabilities<-itempar(faculty.mod_mle, ref= 1:6)
+
+attributes(faculty.itempars.probabilities)
+faculty.itempars.probabilities
+
+```
+Additional descriptions and code from: https://hturner.github.io/PlackettLuce/
+```{r another visualization}
+qv <- qvcalc(faculty.mod_mle.itempars)
+plot(qv, ylab = "Worth (log)", main = NULL)
+```
+
+#PLACKETTLUCE TREE# 
+The Finch paper isn't the most helpful for understanding the trees in case of a split but does give a nice example of when no splits can be identified. Number of terminal nodes returning 1 just gives a single graph with the most preferred item. For illustration of a split, the PlackettLuce Vignette gives a great example: `vignette("Overview", package = "PlackettLuce").` 
+```{r plct}
+faculty.n<-nrow(faculty.survey)
+faculty.g<-group(faculty.rankings2, index = rep(seq_len(faculty.n), 1)) 
+faculty.tree <- pltree(faculty.g ~ ., data = faculty.survey[c("grad","experience")], minsize = 0.05*41, maxdepth = 3) 
+plot(faculty.tree)
+```
+
+```{r plct mhhs}
+personal<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9)
+personal_demo<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+personal<-personal[complete.cases(personal),]
+personal_demo<-left_join(personal,personal_demo)
+personal <- personal %>% select(-ResponseId)
+personal.rank<-as.rankings(personal) 
+
+personal.g<-group(personal.rank,index=rep(seq_len(nrow(personal)),1))
+
+tree_gendersex<-pltree(personal.g~.,data=personal_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(personal.g~.,data=personal_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+## Sui
+suic<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9)
+suic_demo<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+suic<-suic[complete.cases(suic),]
+suic_demo<-left_join(suic,suic_demo)
+suic <- suic %>% select(-ResponseId)
+suic.rank<-as.rankings(suic) 
+
+suic.g<-group(suic.rank,index=rep(seq_len(nrow(suic)),1))
+
+tree_gendersex<-pltree(suic.g~.,data=suic_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+tree_multimar<-pltree(suic.g~BIC_1*SEXOR,data=suic_demo, maxdepth=3,minsize=0.05*nrow(suic))
+plot(tree_raceethn)
+
+#creating a multiply marginalized field
+suic_demo<-suic_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+personal_demo<-personal_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+
+tree_multimar<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","SEXOR","multimar")])
+plot(tree_multimar)
+
+
+# PLM models
+pers.mod_mle <- PlackettLuce(personal.rank, npseudo=0) #for personal, everything worse than intimate partners
+suic.mod_mle <- PlackettLuce(suic.rank, npseudo=0 ) #for suic, mental health prof were marginally lower
+
+
+summary(pers.mod_mle,ref="GHSQ_RankPers_5") #for personal problem, friends, rps, and parents all preferred
+summary(suic.mod_mle,ref="GHSQO_RankSUI_5") 
 
 ```
 
+#TEST FOR RANDOM MEAN
+$Q = \frac{12n}{t(t+1)} \Sigma{^t_{j=1}} (m_i - \frac{t+1}{2})^2 $
+
+$Q$ is the chi-sq test statistic
+$t$ i number of rankings
+$m_i$ is the mean rank
+$n$ is the number of participants
+$\frac{t+1}{2}$ is the mean under the null
+```{r}
+null_mean<-rep(3.5,6) 
+A<-((12*41)/(6*(6+1))) 
+chi<-A*sum((faculty.desc$mean.rank-null_mean)^2) 
+chi
+dchisq(chi,5)
+```
+
+#PHI COMPONENT AND WEIGHTED DISTANCE BASED MODEL# 
+```{r phi}
+faculty.phicom<-phicom(faculty.rankings.agg) 
+faculty.wdbm<-wdbm(faculty.rankings.agg, dtype="foot") 
+faculty.phicom@min 
+faculty.wdbm@min 
+faculty.phicom@coef
+faculty.wdbm@coef
+```
+
+#PLACKETTLUCE MODEL WITH COVARIATES#
+
+```{r plmc}
+faculty.survey$grad<-ifelse(faculty.survey$degree>1,1,0) #binary for graduate degree
+exp_plmc<-summary(rol(faculty.rankings2,faculty.survey$experience)) #faculty rankings 2 is the groupd rankings class of object. allows the rankings to be linked to covariates with group-specific values
+
+#NAT - adding the p-values and z-scores
+exp_plmc@coef %>% as.data.frame(.) %>% mutate(z_score=Estimate/`Std. Error`) %>% rowwise() %>% mutate(p_value=2*(pnorm(abs(z_score),lower.tail = FALSE)))
+
+grad_plmc<-summary(rol(faculty.rankings2,faculty.survey$grad))
+grad_plmc@coef %>% as.data.frame(.) %>% mutate(z_score=Estimate/`Std. Error`) %>% rowwise() %>% mutate(p_value=2*(pnorm(abs(z_score),lower.tail = FALSE)))
+
+
+```
