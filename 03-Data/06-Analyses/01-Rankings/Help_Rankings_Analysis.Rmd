@@ -26,39 +26,6 @@ personal<-personal[complete.cases(personal),]
 rank_personal<-rankagg(personal)
 destat(rank_personal)
 
-```
-
-# The Finch Examples
-Before applying to our massive dataset, some notes on the method and interpretation of the results based on Finch's faculty survey data.
-```{r Finch example}
-Finch_supp_data <- read_excel("Finch_supp_data.xlsx")
-
-faculty.survey<-Finch_supp_data
-
-faculty.rankings<-data.frame(faculty.survey[,1:6])
-faculty.rankings.agg<-rankagg(faculty.rankings) 
-#Experience: 1=0-5, 2-6-10, 3=11-15, 4-16-20, 5=21+
-#Degree: 1=BA/BS, 2=MA/MS, 3=Specialist, 4=PhD
-faculty.rankings<-data.frame(faculty.survey[,1:6])
-faculty.rankings.agg<-rankagg(faculty.rankings)
-```
-
-## Destat
-Destat = descriptive statistics of the ranking data
-The list generates three datafranes: mean.rank, pair, and mar. 
-*Mean.rank* gives the $m_i$ (mean rank for that item). It takes into account all possible rankings of $t$ objects, rank score given to $i$ item by each rater, the observed frequency of ranking. Lower values of $m$ indicate that the number is more favored
-*Pair* refers to the pairwise comparisons. Going rowwise, item 1 ranks ahead of item 2 11 times, ahead of item 3 13 times and so on. Diagonal is 0 and the matrix is not symmetric. This is useful for identifying the specific positioning of two items relative to each other. Row + column givesthe number of all possible rankings.
-*Mar* is the marginals. Going down the $p$th column indicates the number of times that $n$-item is in the $p$th-column position. For example, for row 1, column 1, item 1 is in first 8 times or ranked first by 8 people. 
-
-```{r example destat}
-destat(faculty.rankings.agg)
-
-```
-From this example using the faculty ranking data, item 2 is most favored followed by item 3 then item 1 (ranked 3rd). 
-
-## MDPref
-```{r finch mdpref}
-mdpref(faculty.rankings.agg,rank.vector = T)
-
+save(rank_personal,file="rank_personal.RData")
 ```
 
