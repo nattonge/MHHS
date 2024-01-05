@@ -22,12 +22,21 @@ mhhs_data<-filter(mhhs_data,duration_in_seconds>900 & duration_in_seconds<10080)
 ```
 
 ```{r transform matrix}
-personal<-mhhs_data %>% select(ghsq_rank_pers_1:ghsq_rank_pers_10)
+personal<-mhhs_data %>% select(ghsq_rank_pers_1:ghsq_rank_pers_9)
 personal<-personal[complete.cases(personal),]
 
 rank_personal<-rankagg(personal)
 destat(rank_personal)
 
-save(rank_personal,file="rank_personal.RData")
+save(rank_personal,file="rank_personal688.RData")
+
+sui<-mhhs_data %>% select(ghsqo_rank_sui_1:ghsqo_rank_sui_9)
+sui<-sui[complete.cases(sui),]
+
+rank_sui<-rankagg(sui)
+destat(rank_sui)
+
+save(rank_sui,file="rank_sui688.RData")
+
 ```
 
