@@ -108,6 +108,8 @@ plot(faculty.tree)
 ```
 
 ```{r plct mhhs}
+# load new data
+
 personal<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9)
 personal_demo<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
 personal<-personal[complete.cases(personal),]

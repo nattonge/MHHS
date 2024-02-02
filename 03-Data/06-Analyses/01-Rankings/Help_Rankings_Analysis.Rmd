@@ -9,7 +9,10 @@ library(kutils)
 library(pmr)
 library(readxl)
 library(janitor)
-
+library(smacof)
+library(PlackettLuce)
+library(prefmod)
+library(qvcalc)
 
 ```
 
