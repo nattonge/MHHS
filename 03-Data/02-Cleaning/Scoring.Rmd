@@ -441,3 +441,10 @@ summary(scales_BICII)
 
 # MINI-IPIP
 
+# Combining scales for projects
+
+```{r Kayleigh honors project}
+kayleighdata<-cbind(mhhs_data$ResponseId,mhhs_demotbl,bicii,eis,ghsql,ismi,trs,tps)
+#write.csv(kayleighdata,"../06-Analyses/03-Kayleigh/kayleighdata.csv")
+```
+
