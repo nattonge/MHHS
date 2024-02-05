@@ -25,7 +25,7 @@ library(dplyr)
 
 ```{r load data}
 
-#mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
+mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 ```
 
@@ -33,7 +33,7 @@ library(dplyr)
 
 # Know the range of possible answers for each factor and make sure to include NA
 
-mhhs_demotbl<-mhhs_data %>% select(Race_Ethn2,BIC_1,LANG_1,EDUC_Par,EDUC_Self,GENDER,SEXOR,MILIT) %>% 
+mhhs_demotbl<-mhhs_data %>% select(Race_Ethn2,BIC_1,LANG_1,EDUC_Par,EDUC_Self,GENDER,SEXOR,MILIT,INCOME) %>% 
 mutate(
 Race_Ethn2=factor(Race_Ethn2,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","White","Black","Hispanic","Asian","AmerIndian","PacificIslander","Multiracial"),exclude=NULL), 
 BIC_1=factor(BIC_1, levels=c(NA,0,1),labels=c("Not answered","NotBicultural","Bicultural"),exclude=NULL), 
@@ -42,7 +42,8 @@ EDUC_Par=factor(EDUC_Par,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<
 EDUC_Self=factor(EDUC_Self,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<High School","High School","Some college","Associates","Bachelors","Masters","Doctoral/Professional"),exclude=NULL), 
 GENDER=factor(GENDER,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","cis-woman","cis-man","trans woman","trans man","non-binary","self-id","prefer not to respond"),exclude=NULL), 
 SexualOrientation=factor(SEXOR, levels=c(NA,1,2,3,4,5,6,7,8), labels = c("Not Answered","Straight","Bisexual","Gay","Lesbian","Queer","Questioning","Self-ID","Prefer not to respond"),exclude = NULL), 
-MilitaryService=factor(MILIT,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered","Never Served","Active Duty","National Guard","Military Spouse","Military Dependent","Veteran","Other","Prefer not to respond"),exclude=NULL)) %>% 
+MilitaryService=factor(MILIT,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered","Never Served","Active Duty","National Guard","Military Spouse","Military Dependent","Veteran","Other","Prefer not to respond"),exclude=NULL),
+  Income=factor(INCOME,levels=c(NA,1,2,3,4,5,6),labels=c("Not answered","Less than 10k","10,000-20,000","20,000-50,000","50,000-100,000","100,000-150,000","150,000+"),exclude = NULL)) %>% 
 select(-MILIT,-SEXOR)
 
 CreateTableOne(data=mhhs_demotbl)
@@ -389,8 +390,34 @@ bicf<-mhhs_data %>% select(contains("bicf"))
 
 ```
 
+10 items 1=sd 5 =sa
+
+The numbering is a little odd on the original scale. There's only 10 items numbered to 14.
+7 = 5
+8 = 6
+11 = 7
+12 = 8 
+13 = 9
+14 = 10
+reverse score 7, 8, 11, 12, 13, 14 only for total subscale mean
+Harmony: 1, 2*, 3, 6 Higher scores mean higher harmony (affective)
+Conflict: 7, 8*, 11, 12, 13, 14
+Items 2 and 8 are only asked for participants who self-identified as bicultural.
+
 ```{r}
+#Kayleigh's attempt at scoring BICULTURAL IDENTITY INTEGRATION MAYBE? 
+
 bicii<-mhhs_data %>% select(contains("bicii"))
+
+BICII<-bicii %>% mutate(across(c(BICII_5,BICII_6,BICII_7,BICII_8,BICII_9,BICII_10),~6-.))
+
+BICII_scoring<-BICII %>% dplyr::select(BICII_1:BICII_10)
+key_BICII.list<-list(Total=c(1:10))
+key_BICII<-make.keys(10,key_BICII.list,colnames(BICII_scoring))
+
+scales_BICII<-scoreItems(key_BICII.list,BICII_scoring)
+summary(scales_BICII)
+
 
 ```
 
@@ -414,19 +441,3 @@ bicii<-mhhs_data %>% select(contains("bicii"))
 
 # MINI-IPIP
 
-#Kayleigh's attempt at scoring BICULTURAL IDENTITY INTEGRATION MAYBE? 
-10 items 1=sd 5 =sa
-reverse score 7, 8, 11, 12, 13, 14 only for total subscale mean
-Harmony: 1, 2*, 3, 6 Higher scores mean higher harmony (affective)
-Conflict: 7, 8*, 11, 12, 13, 14
-Items 2 and 8 are only asked for participants who self-identified as bicultural.
-
-BICII<-mhhs_data %>% select(contains("BICII"))
-
-BICII<-BICII %>% mutate(across(c(BICII_5,BICII_6,BICII_7,BICII_8,BICII_9,BICII_10),~10-.))
-BICII_scoring<-BICII %>% dplyr::select(BICII_1:BICII_10)
-key_BICII.list<-list(Total=c(1:10))
-key_BICII<-make.keys(10,key_BICII.list,colnames(BICII_scoring))
-
-scales_BICII<-scoreItems(key_BICII.list,BICII_scoring)
-summary(scales_BICII)

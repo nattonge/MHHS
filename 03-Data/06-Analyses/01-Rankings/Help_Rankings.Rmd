@@ -12,7 +12,6 @@ library(smacof)
 library(PlackettLuce)
 library(prefmod)
 library(qvcalc)
-library(janitor)
 
 ```
 
@@ -40,7 +39,6 @@ The list generates three datafranes: mean.rank, pair, and mar.
 
 ```{r example destat}
 destat(faculty.rankings.agg)
-
 
 ```
 From this example using the faculty ranking data, item 2 is most favored followed by item 3 then item 1 (ranked 3rd). 
@@ -109,6 +107,60 @@ faculty.tree <- pltree(faculty.g ~ ., data = faculty.survey[c("grad","experience
 plot(faculty.tree)
 ```
 
+```{r plct mhhs}
+# load new data
+
+personal<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9)
+personal_demo<-mhhs_data %>% select(ResponseId,GHSQ_RankPers_1:GHSQ_RankPers_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+personal<-personal[complete.cases(personal),]
+personal_demo<-left_join(personal,personal_demo)
+personal <- personal %>% select(-ResponseId)
+personal.rank<-as.rankings(personal) 
+
+personal.g<-group(personal.rank,index=rep(seq_len(nrow(personal)),1))
+
+tree_gendersex<-pltree(personal.g~.,data=personal_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(personal.g~.,data=personal_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+## Sui
+suic<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9)
+suic_demo<-mhhs_data %>% select(ResponseId,GHSQO_RankSUI_1:GHSQO_RankSUI_9,Race_Ethn2,BIC_1,GENDER,SEXOR,LANG_1)
+suic<-suic[complete.cases(suic),]
+suic_demo<-left_join(suic,suic_demo)
+suic <- suic %>% select(-ResponseId)
+suic.rank<-as.rankings(suic) 
+
+suic.g<-group(suic.rank,index=rep(seq_len(nrow(suic)),1))
+
+tree_gendersex<-pltree(suic.g~.,data=suic_demo[c("GENDER","SEXOR")])
+plot(tree_gendersex)
+
+tree_raceethn<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","BIC_1","LANG_1")])
+plot(tree_raceethn)
+
+tree_multimar<-pltree(suic.g~BIC_1*SEXOR,data=suic_demo, maxdepth=3,minsize=0.05*nrow(suic))
+plot(tree_raceethn)
+
+#creating a multiply marginalized field
+suic_demo<-suic_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+personal_demo<-personal_demo %>% mutate(multimar=ifelse(BIC_1>0 & SEXOR>1,1,0))
+
+tree_multimar<-pltree(suic.g~.,data=suic_demo[c("Race_Ethn2","SEXOR","multimar")])
+plot(tree_multimar)
+
+
+# PLM models
+pers.mod_mle <- PlackettLuce(personal.rank, npseudo=0) #for personal, everything worse than intimate partners
+suic.mod_mle <- PlackettLuce(suic.rank, npseudo=0 ) #for suic, mental health prof were marginally lower
+
+
+summary(pers.mod_mle,ref="GHSQ_RankPers_5") #for personal problem, friends, rps, and parents all preferred
+summary(suic.mod_mle,ref="GHSQO_RankSUI_5") 
+
+```
 
 #TEST FOR RANDOM MEAN
 $Q = \frac{12n}{t(t+1)} \Sigma{^t_{j=1}} (m_i - \frac{t+1}{2})^2 $
@@ -148,74 +200,5 @@ exp_plmc@coef %>% as.data.frame(.) %>% mutate(z_score=Estimate/`Std. Error`) %>%
 grad_plmc<-summary(rol(faculty.rankings2,faculty.survey$grad))
 grad_plmc@coef %>% as.data.frame(.) %>% mutate(z_score=Estimate/`Std. Error`) %>% rowwise() %>% mutate(p_value=2*(pnorm(abs(z_score),lower.tail = FALSE)))
 
-```
-
-# Primary Analysis
-```{r}
-mhhs_data<-read.csv("../../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
-mhhs_data<-clean_names(mhhs_data)
-mhhs_data<-filter(mhhs_data,duration_in_seconds>900 & duration_in_seconds<10080)
-
-```
-
-```{r plct mhhs}
-personal<-mhhs_data %>% select(response_id,ghsq_rank_pers_1:ghsq_rank_pers_9)
-personal_demo<-mhhs_data %>% select(response_id,ghsq_rank_pers_1:ghsq_rank_pers_9,race_ethn2,bic_1,gender,sexor,lang_1)
-personal<-personal[complete.cases(personal),]
-personal_demo<-left_join(personal,personal_demo)
-personal <- personal %>% select(-response_id)
-personal.rank<-as.rankings(personal) 
-
-personal.g<-group(personal.rank,index=rep(seq_len(nrow(personal)),1))
-
-tree_gendersex<-pltree(personal.g~.,data=personal_demo[c("gender","sexor")])
-plot(tree_gendersex)
-
-tree_raceethn<-pltree(personal.g~.,data=personal_demo[c("race_ethn2","bic_1","lang_1")])
-plot(tree_raceethn)
-
-## Sui
-suic<-mhhs_data %>% select(response_id,ghsqo_rank_sui_1:ghsqo_rank_sui_9)
-suic_demo<-mhhs_data %>% select(response_id,ghsqo_rank_sui_1:ghsqo_rank_sui_9,race_ethn2,bic_1,gender,sexor,lang_1)
-suic<-suic[complete.cases(suic),]
-suic_demo<-left_join(suic,suic_demo)
-suic <- suic %>% select(-response_id)
-suic.rank<-as.rankings(suic) 
-
-suic.g<-group(suic.rank,index=rep(seq_len(nrow(suic)),1))
-
-tree_gendersex<-pltree(suic.g~.,data=suic_demo[c("gender","sexor")])
-plot(tree_gendersex)
-
-tree_raceethn<-pltree(suic.g~.,data=suic_demo[c("race_ethn2","bic_1","lang_1")])
-plot(tree_raceethn)
-
-tree_multimar<-pltree(suic.g~BIC_1*SEXOR,data=suic_demo, maxdepth=3,minsize=0.05*nrow(suic))
-plot(tree_raceethn)
-
-#creating a multiply marginalized field
-suic_demo<-suic_demo %>% mutate(multimar=ifelse(bic_1>0 & sexor>1,1,0))
-personal_demo<-personal_demo %>% mutate(multimar=ifelse(bic_1>0 & sexor>1,1,0))
-
-tree_multimar<-pltree(suic.g~.,data=suic_demo[c("race_ethn2","sexor","multimar")])
-plot(tree_multimar)
-```
-
-```{r plt}
-
-# PLM models
-pers.mod_mle <- PlackettLuce(personal.rank, npseudo=0) #for personal, everything worse than intimate partners
-suic.mod_mle <- PlackettLuce(suic.rank, npseudo=0 ) #for suic, mental health prof were marginally lower
-
-
-summary(pers.mod_mle,ref="GHSQ_RankPers_5") #for personal problem, friends, rps, and parents all preferred
-summary(suic.mod_mle,ref="GHSQO_RankSUI_5") 
-
-
-personal_demo$racebinary<-ifelse(personal_demo$race_ethn2>1,1,0) #binary for race/ethnicity
-ranks_race<-summary(rol(personal.rank,personal_demo$racebinary)) #faculty rankings 2 is the groupd rankings class of object. allows the rankings to be linked to covariates with group-specific values
-
-#NAT - adding the p-values and z-scores
-ranks_race@coef %>% as.data.frame(.) %>% mutate(z_score=Estimate/`Std. Error`) %>% rowwise() %>% mutate(p_value=2*(pnorm(abs(z_score),lower.tail = FALSE))) %>% ungroup() %>% slice_tail(n=9)
 
 ```
