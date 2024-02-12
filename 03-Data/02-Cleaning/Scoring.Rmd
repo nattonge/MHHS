@@ -28,12 +28,22 @@ library(dplyr)
 mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 ```
+# Metadata and attention checks
+
+AC1 - We care about the quality of our survey data. For us to get the most accurate measures of your opinions, it is important that you provide thoughtful answers to each question in this survey. Do you commit to providing thoughtful answers to the questions in this survey? (1=yes)
+
+AC2 - These surveys can be very long and a little tiring. We want to ensure that you are still paying attention because we care about the quality of the data. If you are still paying attention and ready to move on, please click on the answer Agree. (0=FALSE)
+
+AC3 - AC3 - Based on the text you read above, what color have you been instructed to enter? (correct answer is 3-green)
+
+We care about the quality of our survey data. Knowing you will receive credit for completing this survey regardless of your answer, please answer the following question: Should we use your data? (1=yes)
+
 
 ```{r metadata}
 # saving the start, end, progress, duration etc.
 meta_data<-mhhs_data %>% select(StartDate:ResponseId, contains("Consent"),starts_with("AC")) %>% mutate(Duration_in_seconds=Duration..in.seconds.)
 
-#save(meta_data,file="../04-ProcessedData/meta_data.RDS")
+#save(meta_data,file="../04-ProcessedData/meta_data12202023.RDS")
 
 ```
 
@@ -56,7 +66,7 @@ select(-MILIT,-SEXOR)
 
 CreateTableOne(data=mhhs_demotbl)
 
-#save(mhhs_demotbl,file="../04-ProcessedData/Demotable.RDS")
+#save(mhhs_demotbl,file="../04-ProcessedData/Demotable122023.RDS")
 ```
 
 # PROMIS_Global v1.2
@@ -135,6 +145,7 @@ ghsql %>% select(Informal_all_z,Formal_all_z,None_all_z) %>% gather() %>% ggplot
 
 ghsql %>% select(GHSQL_Pers_10_TEXT,GHSQL_SUI_10_TEXT) %>% filter(GHSQL_Pers_10_TEXT!=""|GHSQL_SUI_10_TEXT!="")
 
+#save(ghsql,file="../04-ProcessedData/ghsql122023.RDS")
 ```
 
 # DASS21
@@ -191,7 +202,7 @@ summary(scales_dass)
 dass %>% select(Dass21_Stress,Dass21_Anxiety, Dass21_Depression) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Stress","Anxiety","Depression"))+ theme(axis.text.x = element_text(angle=90))
 
 #scatterplot to color the cutoffs
-dass_severity<-dass %>%  select(Dass21_Stress,Dass21_Anxiety, Dass21_Depression) %>% 
+dass_scatter<-dass %>%  select(Dass21_Stress,Dass21_Anxiety, Dass21_Depression) %>% 
 pivot_longer(cols=starts_with("Dass21"),names_to = "Subscale",values_to = "score") %>%   mutate(Cuts=case_when((Subscale=="Dass21_Depression" & score<10) ~"Normal",
                        (Subscale== "Dass21_Depression"& score<14)~"Mild",
                        (Subscale== "Dass21_Depression"& score<21)~"Moderate",
@@ -208,12 +219,14 @@ pivot_longer(cols=starts_with("Dass21"),names_to = "Subscale",values_to = "score
                       (Subscale== "Dass21_Stress"& score<34)~"Severe",
                       (Subscale== "Dass21_Stress"& score>33)~"Extremely_Severe"))
 
-  
+
 #severity histogram colored by severity
 dass_scatter %>% ggplot(aes(score,fill=Subscale,group=Subscale))+geom_bar()
 
 #jitter plot colored by severity
 dass_scatter %>% ggplot(aes(x=Subscale,y=score,colour=Cuts))+geom_jitter()+theme_classic()+scale_color_brewer(palette = "Set1")
+
+#save(dass,dass_scatter,file="../04-ProcessedData/dass122023.RDS")
 ```
 # ISMI29
 29-item measure assessing self stigma of mental illness. Includes subscales: alienation, stereotype endorsement, discrimination experience, social withdrawal, stigma resistance. Scored from 1-4. The entire Stigma resistance subscale is reverse scored.
@@ -251,6 +264,7 @@ cor(ismi$ISMI_Stigmar,ismi$ISMI_Alientation,use="complete.obs")
 
 ismi %>% select(ISMI_Alientation,ISMI_Stere,ISMI_Discr,ISMI_Withdrawal,ISMI_Stigmar) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
 
+#save(ismi,file="../04-ProcessedData/ismi122023.RDS")
 ```
 For some reason, the rescored stigma resistance is a negative correlation
 
@@ -278,12 +292,14 @@ ddi %>% select(DDI_Total) %>% add_column(ghsql %>% select(Personal,Suicide,Gener
 
 
 
-# checking the correlations ot ensure they make sense
+# checking the correlations between DDI and other measures ensure they make sense
 cor.test(ddi$DDI_Total,ghsql$General)
 cor.test(ddi$DDI_Total,ghsql$Personal)
 cor.test(ddi$DDI_Total,ghsql$Suicide)
 cor.test(ddi$DDI_Total,ghsql$None_all)
 
+
+#save(ddi,file="../04-ProcessedData/ddi122023.RDS")
 ```
 
 #BFNE
@@ -302,6 +318,8 @@ key_bfne<-make.keys(12,key_bfne.list,colnames(bfne_scoring))
 
 scales_bfne<-scoreItems(key_bfne.list,bfne_scoring)
 summary(scales_bfne)
+
+#save(bfne,file="../04-ProcessedData/bfne122023.RDS")
 
 ```
 
@@ -322,6 +340,8 @@ scales_trs<-scoreItems(key_trs.list,trs_scoring)
 summary(scales_trs)
 
 trs %>% select(TRS_1:TRS_8) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+
+#save(trs,file="../04-ProcessedData/trs122023.RDS")
 
 
 ```
@@ -354,6 +374,7 @@ summary(scales_tps)
 
 tps %>% select(TPS_1:TPS_11) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
 
+#save(tps,file="../04-ProcessedData/tps122023.RDS")
 
 
 ```
@@ -372,7 +393,7 @@ eis_resp<-eis %>% select(!EIS_RE1:EIS_HORIGIN_3_TEXT)
 eis_id %>% filter(EIS_RE1_7_TEXT!="") %>% select(EIS_RE1_7_TEXT)
 eis_id %>% filter(EIS_HORIGIN_3_TEXT!="") %>% select(EIS_HORIGIN_3_TEXT)
 
-# selecting responses only
+# selecting numeric responses only
 eis_resp<-eis_resp %>% mutate(across(c(EIS_Ethni_4,EIS_Ethni_5,EIS_Ethni_8),~5-.)) %>% 
   rowwise() %>% mutate(EIS_Tot=sum(c_across(EIS_Ethni_1:EIS_Ethni_9))) %>% 
   ungroup()
@@ -386,6 +407,7 @@ summary(scales_eis)
 
 eis_resp %>% select(EIS_Ethni_1:EIS_Ethni_9) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
 
+#save(eis,eis_resp,eis_id,file="../04-ProcessedData/eis122023.RDS")
 
 
 ```
@@ -415,7 +437,7 @@ Conflict: 7, 8*, 11, 12, 13, 14
 Items 2 and 8 are only asked for participants who self-identified as bicultural.
 
 ```{r}
-#Kayleigh's attempt at scoring BICULTURAL IDENTITY INTEGRATION MAYBE? 
+#BII scoring - straightforward except for this wonky numbering business
 
 bicii<-mhhs_data %>% select(contains("bicii"))
 
@@ -428,6 +450,7 @@ key_BICII<-make.keys(10,key_BICII.list,colnames(BICII_scoring))
 scales_BICII<-scoreItems(key_BICII.list,BICII_scoring)
 summary(scales_BICII)
 
+#save(bicii,file="../04-ProcessedData/bicii122023.RDS")
 
 ```
 
@@ -454,7 +477,7 @@ summary(scales_BICII)
 # Combining scales for projects
 
 ```{r Kayleigh honors project}
-kayleighdata<-cbind(mhhs_data$ResponseId,mhhs_demotbl,bicii,eis,ghsql,ismi,trs,tps)
-#write.csv(kayleighdata,"../06-Analyses/03-Kayleigh/kayleighdata.csv")
+kayleighdata<-cbind(mhhs_data$ResponseId,meta_data,mhhs_demotbl,bicii,eis,ghsql,ismi,trs,tps)
+#write.csv(kayleighdata,"../06-Analyses/03-Kayleigh/kayleighdata21224.csv")
 ```
 
