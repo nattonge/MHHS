@@ -32,7 +32,15 @@ mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 AC1 - We care about the quality of our survey data. For us to get the most accurate measures of your opinions, it is important that you provide thoughtful answers to each question in this survey. Do you commit to providing thoughtful answers to the questions in this survey? (1=yes)
 
-AC2 - These surveys can be very long and a little tiring. We want to ensure that you are still paying attention because we care about the quality of the data. If you are still paying attention and ready to move on, please click on the answer Agree. (0=FALSE)
+*Notes that AC2 is wonky in Qualtrics. Response options are coded:* 
+1 = strongly disagree
+2 = Disagree
+5 = Neither agree nor disagree
+6 = Agree
+2 = Strongly Agree
+
+AC2 - These surveys can be very long and a little tiring. We want to ensure that you are still paying attention because we care about the quality of the data. If you are still paying attention and ready to move on, please click on the answer Agree.
+*Consider whether you want to know if participants closely read the question and followed instructions, or where they perhaps answering honestly*
 
 AC3 - AC3 - Based on the text you read above, what color have you been instructed to enter? (correct answer is 3-green)
 
