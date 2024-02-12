@@ -29,6 +29,14 @@ mhhs_data<-read.csv("../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
 
 ```
 
+```{r metadata}
+# saving the start, end, progress, duration etc.
+meta_data<-mhhs_data %>% select(StartDate:ResponseId, contains("Consent"),starts_with("AC")) %>% mutate(Duration_in_seconds=Duration..in.seconds.)
+
+#save(meta_data,file="../04-ProcessedData/meta_data.RDS")
+
+```
+
 ```{r demographics}
 
 # Know the range of possible answers for each factor and make sure to include NA
@@ -47,6 +55,8 @@ MilitaryService=factor(MILIT,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered
 select(-MILIT,-SEXOR)
 
 CreateTableOne(data=mhhs_demotbl)
+
+#save(mhhs_demotbl,file="../04-ProcessedData/Demotable.RDS")
 ```
 
 # PROMIS_Global v1.2
