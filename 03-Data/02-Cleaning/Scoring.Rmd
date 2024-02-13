@@ -44,12 +44,27 @@ AC2 - These surveys can be very long and a little tiring. We want to ensure that
 
 AC3 - AC3 - Based on the text you read above, what color have you been instructed to enter? (correct answer is 3-green)
 
-We care about the quality of our survey data. Knowing you will receive credit for completing this survey regardless of your answer, please answer the following question: Should we use your data? (1=yes)
+AC-4 - We care about the quality of our survey data. Knowing you will receive credit for completing this survey regardless of your answer, please answer the following question: Should we use your data? (1=yes)
 
 
 ```{r metadata}
 # saving the start, end, progress, duration etc.
 meta_data<-mhhs_data %>% select(StartDate:ResponseId, contains("Consent"),starts_with("AC")) %>% mutate(Duration_in_seconds=Duration..in.seconds.)
+
+#Identifying responses
+table(meta_data$AC3)
+table(meta_data$AC2)
+table(meta_data$AC1)
+table(meta_data$AC4)
+
+#finding 3 of 4 attention checks and a reasonable duration
+meta_data %>% filter(AC1==1&AC3==3&AC4==1&AC2==6|AC1==1&AC3==3&AC4==1|AC1==1&AC3==3&AC2==6|AC1==1&AC4==1&AC2==6|AC3==3&AC4==1&AC2==6|AC1==1&AC3==3&AC4==1&AC2==6|AC1==1&AC3==3&AC4==1&AC2==2|AC1==1&AC3==3&AC2==2) %>%  filter(Duration_in_seconds>1200&Duration_in_seconds<58519)
+
+# Determine outliers with median value taken for a new filter
+median(boxplot(meta_data$Duration_in_seconds)$out) #median outlier value
+meta_data_medianfilter<-meta_data %>% filter(Duration_in_seconds<58519) 
+(boxplot(meta_data_medianfilter$Duration_in_seconds)$stats)
+mean(meta_data_medianfilter$Duration_in_seconds) #a more reasonable mean. SD is too high to use it to find a lower bound so will just use intuition. 
 
 #save(meta_data,file="../04-ProcessedData/meta_data12202023.RDS")
 
