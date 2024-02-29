@@ -1,0 +1,338 @@
+---
+title: "Kelly_2yp"
+author: "Gg"
+date: '2024-01-11'
+output: html_document
+---
+
+```{r load libraries}
+library(psych)
+library(tidyverse)
+library(apaTables)
+library(tableone)
+library(dplyr)
+library(qualtRics)
+library(kutils)
+library(pmr)
+library(readxl)
+library(janitor)
+library(lavaan)
+library(ggplot2)
+library(semPlot)
+library(RColorBrewer)
+library(semTools)
+
+```
+
+```{r load data}
+
+mhhs_data<-read.csv("../../04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
+
+mhhs_data<- read.csv("C:/Users/Owner/George Mason University - O365 Production/TIDL-Workgroup-GRP - ResearchStudies/01-MHHS/03-Data/04-ProcessedData/MHHS-1_12202023_cleanheader.csv")
+
+
+str(mhhs_data) 
+mhhs_data<-clean_names(mhhs_data)
+mhhs_data<-filter(mhhs_data,duration_in_seconds>900 & duration_in_seconds<10080)
+
+
+view<-mhhs_data
+```
+
+```{r check attention}
+
+#counting responses for each AC
+
+mhhs_data %>% count(ac1) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data %>% count(ac2) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data %>% count(ac3) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data %>% count(ac4) %>%         
+  mutate(prop = prop.table(n))
+
+
+
+#filtering by passing at least 3 of 4 data quality checks (creating variable called "dq" standing for data quality)
+
+#keeping the below attempt here because I can't get it to work and want to talk to Natasha about why it isn't working
+mhhs_data %>% 
+  mutate(dq = (matches(ac1 == 1)) + (matches(ac2 == 6)) + (matches(ac3 == 3)) + (matches(ac4 == 1)))
+
+#for now, doing it the long way
+
+mhhs_data <- mhhs_data %>% mutate(dq1 = case_when(ac1 ==1 ~ 1, TRUE ~ 0))
+
+mhhs_data %>% count(dq1) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data <- mhhs_data %>% mutate(dq2 = case_when(ac2 ==6 ~ 1, TRUE ~ 0))
+
+mhhs_data %>% count(dq2) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data <- mhhs_data %>% mutate(dq3 = case_when(ac3 ==3 ~ 1, TRUE ~ 0))
+
+mhhs_data %>% count(dq3) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data <- mhhs_data %>% mutate(dq4 = case_when(ac4 ==1 ~ 1, TRUE ~ 0))
+
+mhhs_data %>% count(dq4) %>%         
+  mutate(prop = prop.table(n))
+
+mhhs_data <- mhhs_data %>% mutate(dq_tot = dq1 + dq2 + dq3 + dq4)
+
+mhhs_data %>% count(dq_tot) %>%         
+  mutate(prop = prop.table(n))
+
+#filtering by passing at least 3 of the 4 data quality checks
+mhhs_data <- filter(mhhs_data,dq_tot >= 3)
+
+
+```
+#demographics
+
+```{r demographics}
+
+# Know the range of possible answers for each factor and make sure to include NA
+
+mhhs_demotbl<-mhhs_data %>% select(race_ethn2,bic_1,lang_1,educ_par,educ_self,gender,sexor,milit) %>% 
+mutate(
+race_ethn2=factor(race_ethn2,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","White","Black","Hispanic","Asian","AmerIndian","pacificIslander","multiracial"),exclude=NULL), 
+bic_1=factor(bic_1, levels=c(NA,0,1),labels=c("Not answered","Notbicultural","bicultural"),exclude=NULL), 
+lang_1=factor(lang_1, levels=c(NA,0,1),labels=c("Not Answered","English at Home","Additional language at Home"),exclude=NULL), 
+educ_par=factor(educ_par,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<High school","High school","some college","Associates","Bachelors","masters","Doctoral/professional"),exclude = NULL),
+educ_self=factor(educ_self,levels=c(NA,1,2,3,4,5,6,7),labels = c("Not answered","<High school","High school","some college","Associates","Bachelors","masters","Doctoral/professional"),exclude=NULL), 
+gender=factor(gender,levels=c(NA,1,2,3,4,5,6,7),labels=c("Not answered","cis-woman","cis-man","trans woman","trans man","non-binary","self-id","prefer not to respond"),exclude=NULL), 
+sexualorientation=factor(sexor, levels=c(NA,1,2,3,4,5,6,7,8), labels = c("Not Answered","straight","Bisexual","Gay","Lesbian","Queer","Questioning","self-ID","prefer not to respond"),exclude = NULL), 
+militaryservice=factor(milit,levels=c(NA,1,2,3,4,5,6,7,8),labels=c("Not answered","Never served","Active Duty","National Guard","military spouse","military Dependent","Veteran","other","prefer not to respond"),exclude=NULL)) %>% 
+select(-milit,-sexor)
+
+CreateTableOne(data=mhhs_demotbl)
+```
+
+
+
+
+
+# GHSQL
+GHSQL has one open-response item. This is not included in the summary score. Scoring also seems somewhat flexible and includes informal/formal; personal-emotional/suicide; help from anyone/Help from no-one.
+
+Range 1-7 (Extremely unlikely to Extremely Likely)
+
+```{r GHSQL}
+ghsql<-mhhs_data %>% select(contains("GHSQL"))
+
+ghsql
+
+
+ghsql<-ghsql %>% mutate(General=rowSums((select(ghsql,ghsql_pers_1:ghsql_pers_9,ghsql_sui_1:ghsql_sui_9)))) %>% 
+ rowwise() %>%  
+  mutate(personal=sum(c_across(ghsql_pers_1:ghsql_pers_8)),
+         suicide=sum(c_across(ghsql_sui_1:ghsql_sui_8)),
+         Informal_all=sum(c(ghsql_pers_1,ghsql_sui_1,ghsql_pers_2,ghsql_sui_2,ghsql_pers_3,ghsql_sui_3,ghsql_pers_4,ghsql_sui_4)),
+         Formal_all=sum(c(ghsql_pers_5,ghsql_sui_5,ghsql_pers_6,ghsql_sui_6,ghsql_pers_7,ghsql_sui_7,ghsql_pers_8,ghsql_sui_8)),
+         None_all=sum(c(ghsql_pers_9,ghsql_sui_9))) %>% 
+  ungroup() %>% #remove rowwise grouping 
+  mutate(personal_z=scale(personal),suicide_z=scale(suicide),Informal_all_z=scale(Informal_all),Formal_all_z=scale(Formal_all),None_all_z=scale(None_all))
+
+view(ghsql)
+#make a dataframe with only the items to be scored/that need reliability
+ghsql_scoring<-ghsql %>% dplyr::select(1:9,12:20)
+key_ghsql.list<-list(General=c(1:18),Personal=c(1:9),Suicide=c(10:18),Formal=c(5,14,6,15,7,16,8,17),Informal=c(1,10,2,11,3,12,4,13))
+key_ghsql<-make.keys(18,key_ghsql.list,colnames(ghsql_scoring))
+
+scales_ghsql<-scoreItems(key_ghsql.list,ghsql_scoring)
+summary(scales_ghsql)
+
+#histogram to explore the range 
+ghsql %>% select(ghsql_pers_1:ghsql_pers_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone helpline","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(ghsql_sui_1:ghsql_sui_9) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Intimate partner", "Friend","Parent","Other relative","MHP","Phone helpline","Doctor","Minister","Not seek help"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(Informal_all_z,Formal_all_z,None_all_z) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Informal (Pers + Sui)","Formal (Pers + Sui)","None (Pers + Sui)"))+ theme(axis.text.x = element_text(angle=90))
+
+ghsql %>% select(ghsql_pers_10_TEXT,ghsql_sui_10_TEXT) %>% filter(ghsql_pers_10_TEXT!=""|ghsql_sui_10_TEXT!="")
+```
+
+```{r ISMI 29 scoring and descriptives}
+
+
+#note that total score does NOT include stigma resistance
+
+ismi<-mhhs_data %>% select(contains("ISMI"))%>% rowwise %>%  
+  mutate(ismi_Alienation=sum(ismi29_1,ismi29_5,ismi29_8,ismi29_16,ismi29_17,ismi29_21),
+         ismi_Stere=sum(ismi29_2, ismi29_6,ismi29_10,ismi29_18,ismi29_19,ismi29_23,ismi29_29),
+         ismi_Discr=sum(ismi29_3,ismi29_15,ismi29_22,ismi29_25,ismi29_28),
+    ismi_Withdrawal=sum(ismi29_4,ismi29_9,ismi29_11,ismi29_12,ismi29_13,ismi29_20), ismi_tot=sum(ismi29_1,ismi29_5,ismi29_8,ismi29_16,ismi29_17,ismi29_21, ismi29_2, ismi29_6,ismi29_10,ismi29_18,ismi29_19,ismi29_23,ismi29_29, ismi29_3,ismi29_15,ismi29_22,ismi29_25,ismi29_28, ismi29_4,ismi29_9,ismi29_11,ismi29_12,ismi29_13,ismi29_20)) %>% 
+      mutate(ismi29_7=recode(ismi29_7,`1`=4,`2`=3,`3`=2,`4`=1),
+            ismi29_14=recode(ismi29_14,`1`=4,`2`=3,`3`=2,`4`=1),
+         ismi29_24=recode(ismi29_24,`1`=4,`2`=3,`3`=2,`4`=1),
+          ismi29_26=recode(ismi29_26,`1`=4,`2`=3,`3`=2,`4`=1),
+         ismi29_27=recode(ismi29_27,`1`=4,`2`=3,`3`=2,`4`=1)) %>%  
+      mutate(ismi_Stigmar=sum(ismi29_7,ismi29_14,ismi29_24,ismi29_26,ismi29_27)) %>% 
+  ungroup()
+
+view(ismi)
+
+#make a dataframe with only the items to be scored/that need reliability
+ismi_scoring<-ismi %>% dplyr::select(ismi29_1:ismi29_29)
+key_ismi.list<-list(Alien=c(1,5,8,16,17,21),Stereotype=c(2,6,10,18,19,23,29),Discrimination=c(3,15,22,25,28),Withdrawal=c(4,9,11,12,13,20),StigmaR=c(7,14,24,26,27))
+
+key_ismi<-make.keys(29,key_ismi.list,colnames(ismi_scoring))
+
+scales_ismi<-scoreItems(key_ismi.list,ismi_scoring)
+
+
+
+ismi$ismi29_14
+cor(ismi$ismi_Stigmar,ismi$ismi_Alienation,use="complete.obs")
+
+ismi %>% select(ismi_Alienation,ismi_Stere,ismi_Discr,ismi_Withdrawal,ismi_Stigmar) %>% gather() %>%  ggplot(aes(y=value,x=key,color=value))+geom_boxplot()+geom_jitter()
+
+describe(ismi$ismi_Alienation)
+describe(ismi$ismi_Stere)
+describe(ismi$ismi_Discr)
+describe(ismi$ismi_Withdrawal)
+describe(ismi$ismi_tot)
+
+#histograms for each subscale
+ggplot(ismi, aes(x=ismi_Alienation)) + geom_histogram(color="purple", fill="pink")
+
+ggplot(ismi, aes(x=ismi_Stere)) + geom_histogram(color="purple", fill="pink")
+
+ggplot(ismi, aes(x=ismi_Discr)) + geom_histogram(color="purple", fill="pink")
+
+ggplot(ismi, aes(x=ismi_Withdrawal)) + geom_histogram(color="purple", fill="pink")
+
+```
+
+# DASS21
+
+Stress items are 1, 6, 8, 11, 12, 14, 18
+Anxiety items are 2, 4, 7, 9, 15, 19, 20,  
+Depression items are 3, 5, 10, 13, 16, 17, 21 
+
+The depression scale assesses dysphoria, hopelessness, devaluation of life, self-deprecation, lack of interest / involvement, anhedonia and inertia. 
+
+The anxiety scale assesses autonomic arousal, skeletal muscle effects, situational anxiety, and subjective experience of anxious affect. 
+The stress scale is sensitive to levels of chronic nonspecific arousal. It assesses difficulty relaxing, nervous arousal, and being easily upset / agitated, irritable / over-reactive and impatient. 
+
+Scores for depression, anxiety and stress are calculated by summing the scores for the relevant items
+
+Scores on the DASS-21 will need to be multiplied by 2 to calculate the final score and stay equivalent with DASS-42.
+```{r DASS21}
+dass<-mhhs_data %>% select(contains("DASS"))
+
+
+dass<-dass %>% mutate(dass21_Total=rowSums((select(dass,dass21_1:dass21_21)))*2) %>% 
+ rowwise() %>%  
+  mutate(dass21_Stress=sum(dass21_1,dass21_6, dass21_8,dass21_11,dass21_12,dass21_14,dass21_18,na.rm = T),
+         dass21_Anxiety=sum(dass21_2,dass21_4,dass21_7,dass21_9,dass21_15,dass21_19,dass21_20, na.rm=T),
+         dass21_Depression=sum(dass21_3,dass21_5,dass21_10,dass21_13,dass21_16,dass21_17,dass21_21, na.rm=T)) %>% 
+  ungroup() %>%
+  mutate(dass21_Stress_z=scale(dass21_Stress)) %>%
+  mutate(Dep_cuts=case_when(dass21_Depression<10~"Normal",
+                                   dass21_Depression<14~"Mild",
+                                   dass21_Depression<21~"Moderate",
+                                   dass21_Depression<28~"Severe",
+                                   dass21_Depression>27~"Extremely_Severe"),
+                Anx_cuts=case_when(dass21_Anxiety<8~"Normal",
+                                   dass21_Anxiety<10~"Mild",
+                                   dass21_Anxiety<15~"Moderate",
+                                   dass21_Anxiety<20~"Severe",
+                                   dass21_Anxiety>19~"Extremely_Severe"),
+                Stress_cuts=case_when(dass21_Stress<15~"Normal",
+                                   dass21_Stress<19~"Mild",
+                                   dass21_Stress<26~"Moderate",
+                                   dass21_Stress<34~"Severe",
+                                   dass21_Stress>33~"Extremely_Severe"))
+
+
+#make a dataframe with only the items to be scored/that need reliability
+dass_scoring<-dass %>% dplyr::select(dass21_1:dass21_21)
+key_dass.list<-list(Stress=c(1,6,8,11,12,14,18),Anxiety=c(2,4,7,9,15,19,20),Depression=c(3,5,10,13,16,17,21))
+
+key_dass<-make.keys(21,key_dass.list,colnames(dass_scoring))
+
+scales_dass<-scoreItems(key_dass.list,dass_scoring)
+summary(scales_dass)
+
+#histogram to explore the range 
+dass %>% select(dass21_Stress,dass21_Anxiety, dass21_Depression) %>% gather() %>% ggplot(aes(y=value,x=key)) + geom_boxplot() + scale_x_discrete(labels=c("Stress","Anxiety","Depression"))+ theme(axis.text.x = element_text(angle=90))
+
+#scatterplot to color the cutoffs -- this isn't working for me
+dass_severity<-dass %>%  select(dass21_Stress,dass21_Anxiety, dass21_Depression) %>% 
+pivot_longer(cols=starts_with("dass21"),names_to = "Subscale",values_to = "score") %>%   mutate(Cuts=case_when((Subscale=="dass21_Depression" & score<10) ~"Normal",
+                       (Subscale== "dass21_Depression"& score<14)~"Mild",
+                       (Subscale== "dass21_Depression"& score<21)~"Moderate",
+                       (Subscale== "dass21_Depression"& score<28)~"Severe",
+                       (Subscale== "dass21_Depression"& score>27)~"Extremely_Severe",
+                       (Subscale=="dass21_Anxiety"& score<8)~"Normal",
+                      (Subscale== "dass21_Anxiety"& score<10)~"Mild",
+                      (Subscale== "dass21_Anxiety"& score<15)~"Moderate",
+                      (Subscale== "dass21_Anxiety"& score<20)~"Severe",
+                      (Subscale== "dass21_Anxiety"& score>19)~"Extremely_Severe",
+                      (Subscale=="dass21_Stress"& score<15)~"Normal",
+                      (Subscale=="dass21_Stress"& score<19)~"Mild",
+                      (Subscale=="dass21_Stress"& score<26)~"Moderate",
+                      (Subscale== "dass21_Stress"& score<34)~"Severe",
+                      (Subscale== "dass21_Stress"& score>33)~"Extremely_Severe"))
+
+  
+#severity histogram colored by severity - this is funky looking
+dass_severity %>% ggplot(aes(score,fill=Subscale,group=Subscale))+geom_bar()
+
+#jitter plot colored by severity - this looks right
+dass_severity %>% ggplot(aes(x=Subscale,y=score,colour=Cuts))+geom_jitter()+theme_classic()+scale_color_brewer(palette = "Set1")
+
+
+```
+
+```{r bifactor model}
+
+
+# this website is helpful for me in interpretation https://psu-psychology.github.io/r-bootcamp-2018/talks/lavaan_tutorial.html 
+
+#making a data frame with ismi and ghsql
+
+bif_data<- cbind(ismi, ghsql)
+
+view(bif_data)
+
+
+#first part is the paths for the latent variables
+
+#do I include the variables for both personal and suicide?
+
+bifm.lavaan<-'
+Family =~ ghsql_pers_3 + ghsql_pers_4 + ghsql_sui_3 + ghsql_sui_4
+Friends =~ ghsql_pers_1 + ghsql_pers_2 + ghsql_sui_1 + ghsql_sui_2
+Pro =~ ghsql_pers_5 + ghsql_pers_6 + ghsql_pers_7 + ghsql_sui_5 + ghsql_sui_6 + ghsql_sui_7
+
+SI =~ ghsql_sui_1 + ghsql_sui_2 + ghsql_sui_3 + ghsql_sui_4 + ghsql_sui_5 + ghsql_sui_6 + ghsql_sui_7
+Problem =~ ghsql_pers_1 + ghsql_pers_2 + ghsql_pers_3 + ghsql_pers_4 + ghsql_pers_5 + ghsql_pers_6 + ghsql_pers_7
+
+# regression 
+
+Family+Friends+Pro ~ ismi_tot'
+
+fitbifm <- cfa(bifm.lavaan, data=bif_data)
+summary(fitbifm, fit.measures = T)
+
+#first try my fit is not that great...lemme get some more detail
+
+fitted(bifm.lavaan)
+
+# plots
+semPaths(semPlotModel(bifm.lavaan), group="latents",color=c("#CAD1AF","#D7745E","#AC5C8B","#5CA6AC","#C8A112"), nCharNodes = 10,rotation = 2, layout="tree2",sizeLat = 10,sizeMan = 8,bifactor=c("Sui","Pers"),asize=1.5)
+
+
+```
+
+
